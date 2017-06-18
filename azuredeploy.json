@@ -1,0 +1,98 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string"
+        },
+        "siteLocation":{
+            "type": "string"
+        },
+        "appServicePlan":{
+            "type": "string",
+            "allowedValues": [
+                "Free",
+                "Shared",
+                "Basic",
+                "Standard",
+                "Premium"
+            ],
+            "defaultValue": "Free"
+        }
+    },
+    "variables": {
+        "configAppName": "[concat(parameters('siteName'), '/web')]"
+    },
+    "resources": [
+        {
+            "comments": "The App Service to host the Web App",
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+                "name": "[parameters('appServicePlan')]"
+            },
+            "kind": "app",
+            "name": "[parameters('siteName')]",
+            "apiVersion": "2015-08-01",
+            "location": "[parameters('siteLocation')]",
+            "scale": null,
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "numberOfWorkers": 0
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "The Web App",
+            "type": "Microsoft.Web/sites",
+            "kind": "app",
+            "name": "[parameters('siteName')]",
+            "apiVersion": "2015-08-01",
+            "location": "[parameters('siteLocation')]",
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('siteName'))]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('siteName'))]"
+            ],
+            "resources": [   
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "ComposerExtension",
+                    "type": "siteextensions",
+                    "dependsOn": [
+                        "[parameters('siteName')]"
+                    ]
+                }
+            ]
+        },
+        {
+            "comments": "The config for the Web App",
+            "type": "Microsoft.Web/sites/config",
+            "name": "[variables('configAppName')]",
+            "apiVersion": "2015-08-01",
+            "location": "[parameters('siteLocation')]",
+            "scale": null,
+            "properties": {              
+                "localMySqlEnabled": true,
+                "numberOfWorkers": 1,
+                "netFrameworkVersion": "v4.0",
+                "phpVersion": "7.1",
+                "virtualApplications": [
+                    {
+                        "virtualPath": "/",
+                        "physicalPath": "site\\wwwroot",
+                        "preloadEnabled": false,
+                        "virtualDirectories": null
+                    }
+                ],
+                "defaultDocuments": [
+                    "index.php"
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ]
+        }
+    ]
+}
