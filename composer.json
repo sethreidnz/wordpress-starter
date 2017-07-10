@@ -16,5 +16,8 @@
         "plugins/{$name}/": ["type:wordpress-plugin"],
         "content/themes/{$name}/": ["type:wordpress-theme"]
     }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "6.1"
   }
 }
